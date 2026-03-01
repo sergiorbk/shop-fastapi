@@ -27,6 +27,19 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -f k8s/
 
+      - name: Wait for pods to start
+        run: sleep 30
+
+      - name: Debug - Check pod status
+        if: always()
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods
+          echo "=== Pod Details ==="
+          kubectl describe pods
+          echo "=== Pod Logs ==="
+          kubectl logs -l app=ecommerce --tail=50 || true
+
       - name: Run Grading Script
         run: |
           chmod +x ./tests/lab3_test.sh
