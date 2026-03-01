@@ -1,0 +1,33 @@
+name: Lab 3 Kubernetes Deployment
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: lab3-cluster
+
+      - name: Load image to KinD
+        run: |
+          docker pull ghcr.io/sergiorbk/ecommerce-app:latest
+          kind load docker-image ghcr.io/sergiorbk/ecommerce-app:latest --name lab3-cluster
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -f k8s/
+
+      - name: Run Grading Script
+        run: |
+          chmod +x ./tests/lab3_test.sh
+          ./tests/lab3_test.sh
