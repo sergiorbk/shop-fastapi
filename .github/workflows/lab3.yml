@@ -24,12 +24,19 @@ jobs:
           docker pull ghcr.io/sergiorbk/ecommerce-app:latest
           kind load docker-image ghcr.io/sergiorbk/ecommerce-app:latest --name lab3-cluster
 
-      - name: Apply Kubernetes manifests
-        run: kubectl apply -f k8s/
+      - name: Deploy PostgreSQL first
+        run: kubectl apply -f k8s/postgres.yaml
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          kubectl wait --for=condition=ready pod -l app=postgres --timeout=60s
+          kubectl wait --for=condition=ready pod -l app=postgres --timeout=120s
+
+      - name: Apply application manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
 
       - name: Wait for application pods to start
         run: sleep 30
