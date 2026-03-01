@@ -27,7 +27,11 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -f k8s/
 
-      - name: Wait for pods to start
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=postgres --timeout=60s
+
+      - name: Wait for application pods to start
         run: sleep 30
 
       - name: Debug - Check pod status
