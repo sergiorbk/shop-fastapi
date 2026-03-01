@@ -37,4 +37,4 @@ COPY alembic.ini ./
 EXPOSE 8080
 
 # start fastapi app
-CMD ["uvicorn", "src.ecommerce.presentation.api.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "src.ecommerce.main"]
