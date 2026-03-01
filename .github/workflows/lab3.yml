@@ -1,0 +1,57 @@
+name: Lab 3 Kubernetes Deployment
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: lab3-cluster
+
+      - name: Load image to KinD
+        run: |
+          docker pull ghcr.io/sergiorbk/ecommerce-app:latest
+          kind load docker-image ghcr.io/sergiorbk/ecommerce-app:latest --name lab3-cluster
+
+      - name: Deploy PostgreSQL first
+        run: kubectl apply -f k8s/postgres.yaml
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=postgres --timeout=120s
+
+      - name: Apply application manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+      - name: Wait for application pods to start
+        run: sleep 30
+
+      - name: Debug - Check pod status
+        if: always()
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods
+          echo "=== Pod Details ==="
+          kubectl describe pods
+          echo "=== Pod Logs ==="
+          kubectl logs -l app=ecommerce --tail=50 || true
+
+      - name: Run Grading Script
+        run: |
+          chmod +x ./tests/lab3_test.sh
+          ./tests/lab3_test.sh
